@@ -2313,6 +2313,99 @@ ${HARDCODED_PROMPT}
         console.log('%c⚽ 채우미 - 스포츠 뉴스 크롤러', 'color: #667eea; font-size: 20px; font-weight: bold;');
         console.log('%c✅ 완전 독립형 - 백엔드 없이 작동합니다!', 'color: #38ef7d; font-size: 14px;');
         console.log('%c💡 CORS 오류 시 브라우저 확장 프로그램(CORS Unblock)을 사용하세요.', 'color: #764ba2;');
+        
+        // 우클릭 금지
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            return false;
+        });
+        
+        // 텍스트 선택 금지 (선택적)
+        document.addEventListener('selectstart', function(e) {
+            e.preventDefault();
+            return false;
+        });
+        
+        // 드래그 금지 (선택적)
+        document.addEventListener('dragstart', function(e) {
+            e.preventDefault();
+            return false;
+        });
+        
+        // 개발자 도구 방지
+        // F12 키 차단
+        document.addEventListener('keydown', function(e) {
+            // F12
+            if (e.keyCode === 123) {
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+            }
+            
+            // Ctrl+Shift+I (개발자 도구)
+            if (e.ctrlKey && e.shiftKey && e.keyCode === 73) {
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+            }
+            
+            // Ctrl+Shift+J (콘솔)
+            if (e.ctrlKey && e.shiftKey && e.keyCode === 74) {
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+            }
+            
+            // Ctrl+Shift+C (요소 검사)
+            if (e.ctrlKey && e.shiftKey && e.keyCode === 67) {
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+            }
+            
+            // Ctrl+U (소스 보기)
+            if (e.ctrlKey && e.keyCode === 85) {
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+            }
+            
+            // Ctrl+S (저장)
+            if (e.ctrlKey && e.keyCode === 83) {
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+            }
+            
+            // Ctrl+P (인쇄)
+            if (e.ctrlKey && e.keyCode === 80) {
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+            }
+        });
+        
+        // 개발자 도구 감지 및 페이지 리로드
+        let devtools = {open: false, orientation: null};
+        setInterval(function() {
+            if (window.outerHeight - window.innerHeight > 200 || window.outerWidth - window.innerWidth > 200) {
+                if (!devtools.open) {
+                    devtools.open = true;
+                    // 개발자 도구가 열렸을 때 처리 (선택적)
+                    // window.location.reload(); // 페이지 리로드 (원하는 경우 주석 해제)
+                }
+            } else {
+                devtools.open = false;
+            }
+        }, 500);
+        
+        // 개발자 도구 열림 감지 (console.log 감지)
+        const originalLog = console.log;
+        console.log = function() {
+            // 개발자 도구가 열렸을 때 감지 (선택적)
+            // 원하는 경우 여기에 처리 로직 추가
+            originalLog.apply(console, arguments);
+        };
     </script>
 </body>
 </html>
