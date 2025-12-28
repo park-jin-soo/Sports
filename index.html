@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -1701,7 +1700,7 @@ STEP 1 제목 생성: "전기차 보험 5개 상품 가입해보니 숨겨진 �
                             log(`📷 이미지 다운로드 완료: ${downloadedImages.length}/${images.length}개`, downloadedImages.length === images.length ? 'success' : 'warning');
                             
                             if (downloadedImages.length > 0) {
-                                if (targetDirectory) {
+                                if (newsFolderHandle) {
                                     showStatus(`✅ 이미지 저장 완료: ${downloadedImages.length}개 (선택한 폴더)`, 'success');
                                 } else {
                                     showStatus(`✅ 이미지 다운로드 완료: ${downloadedImages.length}개 (기본 다운로드 폴더)`, 'success');
