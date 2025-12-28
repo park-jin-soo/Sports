@@ -586,6 +586,192 @@
         let generatedFilename = '';
         let selectedDirectoryHandle = null; // 선택한 폴더 핸들 저장
         
+        // 네온 글로우 색상 팔레트 (액자 적용용)
+        const neonColors = [
+            { color: '#00FFFF', glow: '#00FFFF' }, // 시안 (Cyan)
+            { color: '#FF00FF', glow: '#FF00FF' }, // 마젠타 (Magenta)
+            { color: '#00FF00', glow: '#00FF00' }, // 라임 그린 (Lime Green)
+            { color: '#FFFF00', glow: '#FFFF00' }, // 옐로우 (Yellow)
+            { color: '#FF00FF', glow: '#FF00FF' }, // 핑크 (Pink)
+            { color: '#00CED1', glow: '#00CED1' }, // 다크 터쿼이즈 (Dark Turquoise)
+            { color: '#FF1493', glow: '#FF1493' }, // 딥 핑크 (Deep Pink)
+            { color: '#7FFF00', glow: '#7FFF00' }, // 차트리즈 (Chartreuse)
+            { color: '#00BFFF', glow: '#00BFFF' }, // 딥 스카이 블루 (Deep Sky Blue)
+            { color: '#FF69B4', glow: '#FF69B4' }, // 핫 핑크 (Hot Pink)
+        ];
+        
+        // 랜덤 네온 색상 생성
+        function getRandomNeonColor() {
+            const randomIndex = Math.floor(Math.random() * neonColors.length);
+            return neonColors[randomIndex];
+        }
+        
+        // 라운드 사각형 그리기 함수
+        function drawRoundedRect(ctx, x, y, width, height, radius) {
+            ctx.beginPath();
+            ctx.moveTo(x + radius, y);
+            ctx.lineTo(x + width - radius, y);
+            ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+            ctx.lineTo(x + width, y + height - radius);
+            ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+            ctx.lineTo(x + radius, y + height);
+            ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+            ctx.lineTo(x, y + radius);
+            ctx.quadraticCurveTo(x, y, x + radius, y);
+            ctx.closePath();
+        }
+        
+        // 이미지에 액자 적용 (blob과 fileHandle을 받아서 처리)
+        async function applyFrameToImageBlob(blob, fileHandle, fileName) {
+            try {
+                // 이미지 로드
+                const img = new Image();
+                const imageUrl = URL.createObjectURL(blob);
+                
+                return new Promise((resolve, reject) => {
+                    img.onload = async () => {
+                        try {
+                            // 캔버스 크기 계산
+                            // 외부 액자: 10px (각 면)
+                            // 외부 여백: 20px (각 면)
+                            // 내부 액자: 6px (각 면)
+                            // 내부 액자 내경 = 전체 - 외부액자(10*2) - 외부여백(20*2) - 내부액자(6*2) = 전체 - 72
+                            // 이미지 = 내부 액자 내경 - 10px
+                            // 이미지 크기를 650으로 하면: 650 = 전체 - 82, 전체 = 732
+                            const canvasSize = 732;
+                            const outerFrameWidth = 10;
+                            const outerPadding = 20;
+                            const innerFrameWidth = 6;
+                            // 내부 액자 내경 계산
+                            const innerFrameInnerSize = canvasSize - outerFrameWidth * 2 - outerPadding * 2 - innerFrameWidth * 2;
+                            // 이미지 크기 = 내부 액자 내경 - 10px
+                            const imageSize = innerFrameInnerSize - 10;
+                            
+                            // 캔버스 생성
+                            const canvas = document.createElement('canvas');
+                            canvas.width = canvasSize;
+                            canvas.height = canvasSize;
+                            const ctx = canvas.getContext('2d');
+                            
+                            // 배경을 흰색으로
+                            ctx.fillStyle = '#ffffff';
+                            ctx.fillRect(0, 0, canvasSize, canvasSize);
+                            
+                            // 네온 색상 선택
+                            const neonColor = getRandomNeonColor();
+                            const outerFrameColor = neonColor.color;
+                            const cornerRadius = 15; // 라운드 코너 반경
+                            
+                            // 외부 액자 그리기 (네온 글로우 효과 + 라운드 코너)
+                            ctx.save();
+                            ctx.shadowBlur = 20;
+                            ctx.shadowColor = neonColor.glow;
+                            ctx.shadowOffsetX = 0;
+                            ctx.shadowOffsetY = 0;
+                            drawRoundedRect(ctx, 0, 0, canvasSize, canvasSize, cornerRadius);
+                            ctx.fillStyle = outerFrameColor;
+                            ctx.fill();
+                            ctx.restore();
+                            
+                            // 외부 여백 영역 (흰색, 라운드 코너)
+                            const outerPaddingStart = outerFrameWidth;
+                            const outerPaddingSize = canvasSize - outerFrameWidth * 2;
+                            ctx.fillStyle = '#ffffff';
+                            drawRoundedRect(ctx, outerPaddingStart, outerPaddingStart, 
+                                         outerPaddingSize, outerPaddingSize, 
+                                         Math.max(0, cornerRadius - outerFrameWidth));
+                            ctx.fill();
+                            
+                            // 내부 액자 그리기 (외부 액자와 동일한 네온 색상, 글로우 효과)
+                            const innerFrameStart = outerFrameWidth + outerPadding;
+                            const innerFrameSize = canvasSize - (outerFrameWidth + outerPadding) * 2;
+                            ctx.save();
+                            ctx.shadowBlur = 15;
+                            ctx.shadowColor = neonColor.glow;
+                            ctx.shadowOffsetX = 0;
+                            ctx.shadowOffsetY = 0;
+                            drawRoundedRect(ctx, innerFrameStart, innerFrameStart, 
+                                         innerFrameSize, innerFrameSize, 
+                                         Math.max(0, cornerRadius - outerFrameWidth - outerPadding));
+                            ctx.fillStyle = outerFrameColor;
+                            ctx.fill();
+                            ctx.restore();
+                            
+                            // 내부 액자 내부 영역 (흰색, 라운드 코너)
+                            const innerFrameInnerStart = innerFrameStart + innerFrameWidth;
+                            ctx.fillStyle = '#ffffff';
+                            drawRoundedRect(ctx, innerFrameInnerStart, innerFrameInnerStart, 
+                                         innerFrameInnerSize, innerFrameInnerSize, 
+                                         Math.max(0, cornerRadius - outerFrameWidth - outerPadding - innerFrameWidth));
+                            ctx.fill();
+                            
+                            // 이미지 리사이즈 및 그리기
+                            // 이미지는 내부 액자 내경보다 10px 작게
+                            const imagePadding = 5; // 내부 액자 내경에서 이미지까지 10px (각 면 5px)
+                            const imageStart = innerFrameInnerStart + imagePadding;
+                            
+                            // 이미지 비율 계산
+                            const imgAspect = img.width / img.height;
+                            let drawWidth = imageSize;
+                            let drawHeight = imageSize;
+                            let drawX = imageStart;
+                            let drawY = imageStart;
+                            
+                            // 비율을 유지하면서 이미지 영역에 맞추기
+                            if (imgAspect > 1) {
+                                // 가로가 더 긴 경우
+                                drawHeight = imageSize / imgAspect;
+                                drawY = imageStart + (imageSize - drawHeight) / 2;
+                            } else if (imgAspect < 1) {
+                                // 세로가 더 긴 경우
+                                drawWidth = imageSize * imgAspect;
+                                drawX = imageStart + (imageSize - drawWidth) / 2;
+                            }
+                            
+                            // 이미지를 내부 액자 내경보다 10px 작은 영역에 그리기 (비율 유지)
+                            ctx.drawImage(
+                                img, 
+                                drawX, 
+                                drawY, 
+                                drawWidth, 
+                                drawHeight
+                            );
+                            
+                            // 캔버스를 Blob으로 변환
+                            canvas.toBlob(async (framedBlob) => {
+                                try {
+                                    // 기존 파일에 덮어쓰기
+                                    const writable = await fileHandle.createWritable();
+                                    await writable.write(framedBlob);
+                                    await writable.close();
+                                    
+                                    URL.revokeObjectURL(imageUrl);
+                                    resolve(true);
+                                } catch (err) {
+                                    URL.revokeObjectURL(imageUrl);
+                                    reject(err);
+                                }
+                            }, 'image/jpeg', 0.95);
+                            
+                        } catch (err) {
+                            URL.revokeObjectURL(imageUrl);
+                            reject(err);
+                        }
+                    };
+                    
+                    img.onerror = () => {
+                        URL.revokeObjectURL(imageUrl);
+                        reject(new Error('이미지 로드 실패'));
+                    };
+                    
+                    img.src = imageUrl;
+                });
+                
+            } catch (err) {
+                throw new Error(`액자 적용 실패: ${err.message}`);
+            }
+        }
+        
         // 하드코딩된 프롬프트 (네이버 블로그 SEO 최적화 프롬프트 - 절대 수정/삭제/요약 없이 100% 그대로)
         const HARDCODED_PROMPT = `네이버 블로그 원고 생성 프롬프트 (2025년 검색+홈판 통합 전략)
 
@@ -1657,9 +1843,21 @@ STEP 1 제목 생성: "전기차 보험 5개 상품 가입해보니 숨겨진 �
                                         if (newsFolderHandle) {
                                             try {
                                                 const fileHandle = await newsFolderHandle.getFileHandle(fileName, { create: true });
+                                                
+                                                // 먼저 원본 이미지 저장
                                                 const writable = await fileHandle.createWritable();
                                                 await writable.write(imgBlob);
                                                 await writable.close();
+                                                
+                                                // 액자 적용
+                                                log(`  🖼️ 액자 적용 중: ${fileName}...`, 'info');
+                                                try {
+                                                    await applyFrameToImageBlob(imgBlob, fileHandle, fileName);
+                                                    log(`  ✅ 액자 적용 완료: ${fileName}`, 'success');
+                                                } catch (frameError) {
+                                                    log(`  ⚠️ 액자 적용 실패 (원본은 저장됨): ${frameError.message}`, 'warning');
+                                                }
+                                                
                                                 downloadedImages.push(fileName);
                                                 log(`  ✅ 이미지 저장 완료: ${fileName} (${folderName} 폴더)`, 'success');
                                             } catch (e) {
@@ -1677,7 +1875,7 @@ STEP 1 제목 생성: "전기차 보험 5개 상품 가입해보니 숨겨진 �
                                                 log(`  ✅ 이미지 다운로드 완료: ${fileName}`, 'success');
                                             }
                                         } else {
-                                            // 폴더가 생성되지 않았으면 기본 다운로드
+                                            // 폴더가 생성되지 않았으면 기본 다운로드 (액자 적용 불가)
                                             const url = URL.createObjectURL(imgBlob);
                                             const a = document.createElement('a');
                                             a.href = url;
@@ -1687,7 +1885,7 @@ STEP 1 제목 생성: "전기차 보험 5개 상품 가입해보니 숨겨진 �
                                             document.body.removeChild(a);
                                             URL.revokeObjectURL(url);
                                             downloadedImages.push(fileName);
-                                            log(`  ✅ 이미지 다운로드 완료: ${fileName} (기본 다운로드 폴더)`, 'success');
+                                            log(`  ✅ 이미지 다운로드 완료: ${fileName} (기본 다운로드 폴더, 액자 미적용)`, 'success');
                                         }
                                     } else {
                                         log(`  ⚠️ 이미지 다운로드 실패: ${imgUrl}`, 'warning');
